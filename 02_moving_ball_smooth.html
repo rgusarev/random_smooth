@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+      * { padding: 0; margin: 0; }
+      canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+    <canvas id="myCanvas" width="800" height="600"></canvas>
+
+    <script>
+        class Point {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            dist(P) {
+                return Math.sqrt((this.x - P.x) ** 2 + (this.y - P.y) ** 2);
+            }
+        }
+
+        class Vector {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            norm() {
+                var tmp = new Vector(-this.y, this.x);
+                return tmp;
+            }
+            normalize() {
+                var x = this.x;
+                var y = this.y;
+                this.x /= Math.sqrt(x ** 2 + y ** 2);
+                this.y /= Math.sqrt(x ** 2 + y ** 2);
+            }
+
+            // returns cross product of v1 and v2
+            cross(V) {
+                return this.x * V.y - this.y * V.x;
+            }
+        }
+
+        // crete a line from point and vector
+        class Line {
+            constructor(p, v) {
+                this.p = p;
+                this.v = v;
+            }
+        }
+
+        
+        function intersect(l1, l2) {
+            let x1 = l1.p.x;
+            let y1 = l1.p.y;
+            let x2 = l1.v.x + l1.p.x;
+            let y2 = l1.v.y + l1.p.y;
+            let a1 = y2 - y1;
+            let b1 = x1 - x2;
+            let c1 = x1 * (y1 - y2) + y1 * (x2 - x1);
+
+            x1 = l2.p.x;
+            y1 = l2.p.y;
+            x2 = l2.v.x + l2.p.x;
+            y2 = l2.v.y + l2.p.y;
+            a2 = y2 - y1;
+            b2 = x1 - x2;
+            c2 = x1 * (y1 - y2) + y1 * (x2 - x1);
+
+            var tmp = new Point((b1 * c2 - b2 * c1) / (a1 * b2 - a2 * b1), (a2 * c1 - a1 * c2) / (a1 * b2 - a2 * b1));
+            return tmp
+        }
+
+        // returns center of circle passes points A and B with tangent v at point A
+        function get_circle_center(A, B, v) {
+            var n = v.norm();
+            l1 = new Line(A, n);
+
+            var mid = new Point((A.x + B.x) / 2, (A.y + B.y) / 2);
+            tmp_v = new Vector(B.x - A.x, B.y - A.y);
+            n2 = tmp_v.norm();
+            l2 = new Line(mid, n2);
+            return intersect(l1, l2);
+        }
+
+
+        function move_on_circle(A, C) {
+            let alpha = 0.01;
+            console.log("CENTER:", C);
+            var x = C.x + (A.x - C.x) * Math.cos(alpha) - (A.y - C.y) * Math.sin(alpha);
+            var y = C.y + (A.x - C.x) * Math.sin(alpha) + (A.y - C.y) * Math.cos(alpha);
+            var tmp = new Point(x, y);
+            console.log("tmp:", tmp);
+            return tmp;
+        }
+
+
+        function get_new_pos(A, v) {
+            // Видимо, надо генерить новую точку в "положительной" полуплоскости
+            // иначе есть резкие повороты вектора движения
+            var dest_x = Math.floor(Math.random() * canvas.width) - canvas.width / 2;
+            var dest_y = Math.floor(Math.random() * canvas.height) - canvas.height / 2;
+            // var dest_x = -100;
+            // var dest_y = 0;
+
+            // center of circle — base for future arc move
+            var B = new Point(dest_x, dest_y);
+            C = get_circle_center(A, B, v);
+            // drawBall(B, "#777777");
+            // drawBall(C, "#0000FF");
+
+            // rotate counterclockwise if cross > 0, otherwise clockwise
+            let alpha = 1 * Math.PI / 180;
+            let v1 = new Vector(A.x - C.x, A.y - C.y);
+            let v2 = new Vector(B.x - C.x, B.y - C.y);
+            if (v1.cross(v2) > 0) {
+                alpha = -alpha;
+            }
+            var x = C.x + (A.x - C.x) * Math.cos(alpha) + (A.y - C.y) * Math.sin(alpha);
+            var y = C.y - (A.x - C.x) * Math.sin(alpha) + (A.y - C.y) * Math.cos(alpha);
+            var tmp = new Point(x, y);
+            // update current_v
+            radius_v = new Vector(tmp.x - C.x, tmp.y - C.y);
+            current_v = radius_v.norm();
+            current_v.normalize();
+            
+            // console.log("angle", alpha);
+            // console.log("current_point (A)", A);
+            console.log("radius_v", radius_v);
+            console.log("current_v", current_v);
+            // console.log("norm", current_v);
+            // console.log("random B", B);
+            // console.log("circ center", C);
+            console.log("new pt", tmp)
+
+            return [tmp, current_v];
+        }
+
+        function drawBall(P, color) {
+            ctx.beginPath();
+            ctx.arc(
+                P.x + canvas.width / 2,
+                P.y + canvas.height / 2,
+                10,
+                0,
+                Math.PI * 2
+            );
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let new_pos = get_new_pos(current_point, current_v);
+            current_point = new_pos[0];
+            current_v = new_pos[1];
+
+            drawBall(current_point, "#0095DD");
+            // current_point = move_on_circle(current_point, current_center);
+            // console.log(current_point);
+        }
+
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+
+        var x = 0;
+        var y = 0;
+        var current_point = new Point(x, y);
+        var current_v = new Vector(0, 1);
+        // draw();
+        // draw();
+        // setInterval(draw, 10);
+
+        // v1 = new Vector(1, 2);
+        // p1 = new Point(-2, 3);
+        // L1 = new Line(p1, v1);
+        // v2 = new Vector(1, 4);
+        // p2 = new Point(1, -2);
+        // L2 = new Line(p2, v2);
+        // console.log(L1, L2);
+        // console.log(intersect(L1, L2));
+        // v1 = new Vector(0, 1);
+        // p1 = new Point(0, -4);
+        // L1 = new Line(p1, v1);
+        // v2 = new Vector(5, 0);
+        // p2 = new Point(-3, 0);
+        // L2 = new Line(p2, v2);
+        // console.log(L1, L2);
+        // console.log(intersect(L1, L2));
+        // p1 = new Point(3, 3);
+        // v1 = new Vector(-1, -3);
+        // L1 = new Line(p1, v1);
+        // p2 = new Point(-2, 1);
+        // v2 = new Vector(-1, 2);
+        // L2 = new Line(p2, v2);
+        // console.log(L1, L2);
+        // console.log(intersect(L1, L2));
+    </script>
+
+</body>
+</html>
