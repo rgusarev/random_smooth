@@ -20,17 +20,17 @@
             return {x:a.x - b.x, y:a.y - b.y};
         }
 
-        function draw_pt(context, pt, color, radius) {
-            context.fillStyle = color;
-            context.beginPath();
+        function draw_pt(pt, color, radius) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
             ctx.arc(pt.x, pt.y, radius, 0, 2 * Math.PI);  // Control point one
-            context.fill()
+            ctx.fill()
         }
 
         function new_point() {
             return {
-                x: Math.floor(Math.random() * canvas.width) - canvas.width / 2,
-                y: Math.floor(Math.random() * canvas.width) - canvas.width / 2
+                x: Math.floor(Math.random() * canvas.width),
+                y: Math.floor(Math.random() * canvas.height)
             }
         }
 
@@ -41,56 +41,67 @@
         function get_next_pts() {
             a = new_point();
             b = new_point();
-            c = add(a, sub(b, a));
-            console.log(a, b, c);
+            c = add(b, sub(b, a));
             while (true) {
                 a = new_point();
                 b = new_point();
-
-                c = add(a, sub(b, a));
-                console.log(c);
-                if (0 <= c.x && c.x < ctx.width && 0 <= c.y && c.y < cts.height) {
+                c = add(b, sub(b, a));
+                if (c.x >= 0 && c.x < canvas.width && c.y >= 0 && c.y < canvas.height) {
                     return [a, b, c];
                 }
             }
-            return [a, b, c];
+            // return [a, b, c];
         }
 
         function drawBall(P, color) {
             ctx.beginPath();
-
+            ctx.arc(P.x, P.y, 10, 0, Math.PI * 2);
             ctx.fillStyle = color;
             ctx.fill();
             ctx.closePath();
         }
+
         function draw() {
-            let N = 100;
-            for (let i = 0; i < N; i++) {
-                t = i / N;
-                // calc all points
-                points = [new_point(), new_point()];
+            step++;
+            if (step > N) {
+                step = 0;
+                points = [points[points.length - 2], points[points.length - 1]];
                 cont = get_next_pts();
                 points.push(cont[0]);
                 points.push(cont[1]);
                 points.push(cont[2]);
-                let a, b, c, d, tmp;
-                [a, b, c, d, tmp] = points;
-                [p, q, r] = [move(a, b, t), move(b, c, t), move(c, d, t)]
-                [v, w] = [move(p, q, t), move(q, r, t)];
-                let P = move(x, y, t);
-
-                // clear canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // draw ball
-                drawBall(P, "#0095DD");
             }
+            t = step / N;
+            let a, b, c, d, tmp;
+            [a, b, c, d, tmp] = points;
+            [p, q, r] = [move(a, b, t), move(b, c, t), move(c, d, t)];
+            [v, w] = [move(p, q, t), move(q, r, t)];
+            let P = move(v, w, t);
+            // console.log(P);
+            draw_pt(a, "red", 5);
+            draw_pt(b, "black", 5);
+            draw_pt(c, "black", 5);
+
+            // clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // draw ball
+            drawBall(P, "#0095DD");
         }
 
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
+        var N = 300;
+        // calc all points
+        points = [new_point(), new_point()];
+        cont = get_next_pts();
+        points.push(cont[0]);
+        points.push(cont[1]);
+        points.push(cont[2]);
+        var step = 0;
+
         draw();
-        // setInterval(draw, 10);
+        setInterval(draw, 10);
     </script>
 
 </body>
