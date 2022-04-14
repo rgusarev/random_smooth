@@ -19,29 +19,34 @@ def gen_pt():
 
 
 def gen_continue():
-    # Нужно выбрать такие точки a и b, что a, b, b+(b-a) все лежат внутри квадрата
+    # Нужно выбрать такие точки a и b,
+    # что a, b, b + (b - a) все лежат внутри квадрата
     while True:
         p2 = gen_pt()
         p3 = gen_pt()
         p4 = add(p3, sub(p3, p2))
+        # return p2, p3, p4
         if 0 <= p4[0] <= 1000 and 0 <= p4[1] <= 1000:
             return p2, p3, p4
 
 
 pts = [gen_pt(), gen_pt(), *gen_continue()]
 
+print(pts)
+
+N = 100
 while True:
-    for i in range(100):
-        t = i / 100
+    for i in range(N):
+        t = i / N
         a, b, c, d, _ = pts
         p, q, r = move(a, b, t), move(b, c, t), move(c, d, t)
         x, y = move(p, q, t), move(q, r, t)
         z = move(x, y, t)
         clear()
         filled_circle('red', z, 10)
-        # filled_circle('blue', b, 2)
-        # filled_circle('blue', c, 2)
-        # filled_circle('yellow', d, 2)
+        filled_circle('blue', b, 2)
+        filled_circle('blue', c, 2)
+        filled_circle('yellow', d, 2)
         tick()
     print('next curve')
     # Выбираем новые точки.

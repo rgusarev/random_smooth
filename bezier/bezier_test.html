@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Bezier curve test</title>
+    <style>
+      * { padding: 0; margin: 0; }
+      canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script>
+        function add(a, b) {
+            return {x:a.x + b.x, y:a.y + b.y};
+        }
+
+        function sub(a, b) {
+            return {x:a.x - b.x, y:a.y - b.y};
+        }
+
+        function draw_pt(context, pt, color, radius) {
+            context.fillStyle = color;
+            context.beginPath();
+            ctx.arc(pt.x, pt.y, radius, 0, 2 * Math.PI);  // Control point one
+            context.fill()
+        }
+
+        function new_point() {
+            return {
+                x: Math.floor(Math.random() * canvas.width) - canvas.width / 2,
+                y: Math.floor(Math.random() * canvas.width) - canvas.width / 2
+            }
+        }
+
+        function move(a, b, t) {
+            return {x: a.x * (1 - t) + b.x * t, y: a.y * (1 - t) + b.y * t}
+        }
+
+        function get_next_pts() {
+            a = new_point();
+            b = new_point();
+            c = add(a, sub(b, a));
+            console.log(a, b, c);
+            while (true) {
+                a = new_point();
+                b = new_point();
+
+                c = add(a, sub(b, a));
+                console.log(c);
+                if (0 <= c.x && c.x < ctx.width && 0 <= c.y && c.y < cts.height) {
+                    return [a, b, c];
+                }
+            }
+            return [a, b, c];
+        }
+
+        function drawBall(P, color) {
+            ctx.beginPath();
+
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+        function draw() {
+            let N = 100;
+            for (let i = 0; i < N; i++) {
+                t = i / N;
+                // calc all points
+                points = [new_point(), new_point()];
+                cont = get_next_pts();
+                points.push(cont[0]);
+                points.push(cont[1]);
+                points.push(cont[2]);
+                let a, b, c, d, tmp;
+                [a, b, c, d, tmp] = points;
+                [p, q, r] = [move(a, b, t), move(b, c, t), move(c, d, t)]
+                [v, w] = [move(p, q, t), move(q, r, t)];
+                let P = move(x, y, t);
+
+                // clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // draw ball
+                drawBall(P, "#0095DD");
+            }
+        }
+
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        draw();
+        // setInterval(draw, 10);
+    </script>
+
+</body>
+</html>
